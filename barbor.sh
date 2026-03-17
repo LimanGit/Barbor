@@ -1,67 +1,89 @@
 #!/bin/sh
 
+##############################
+# Arch Linux Installation    #
+##############################
+
+# Define the root directory to /home/container.
+# We can only write in /home/container and /tmp in the container.
 ROOTFS_DIR=/home/container
+
 PROOT_VERSION="5.3.0"
 
+# Detect the machine architecture.
 ARCH=$(uname -m)
 
+# Only support x86_64/amd64.
 if [ "$ARCH" = "x86_64" ]; then
   ARCH_ALT=amd64
 else
-  printf "Unsupported CPU architecture: ${ARCH}\n"
+  printf "Unsupported CPU architecture: ${ARCH}"
   exit 1
 fi
 
-mkdir -p $ROOTFS_DIR
+# Download & decompress the Arch root file system if not already installed.
+if [ ! -e $ROOTFS_DIR/.installed ]; then
+    curl -Lo /tmp/rootfs.tar.gz \
+    "https://github.com/LimanGit/Barbor/releases/download/arch-rootfs/arch.tar.gz"
+    tar -xzf /tmp/rootfs.tar.gz -C $ROOTFS_DIR
+fi
+
+################################
+# Package Installation & Setup #
+################################
 
 if [ ! -e $ROOTFS_DIR/.installed ]; then
-    # Download static xz binary (comes as .tar.gz so we can extract it)
-    curl -L --retry 3 \
-        -o $ROOTFS_DIR/xz-static.tar.gz \
-        "https://github.com/therootcompany/xz-static/releases/download/v5.2.5/xz-5.2.5-linux-x86_64.tar.gz"
-    tar -xzf $ROOTFS_DIR/xz-static.tar.gz -C $ROOTFS_DIR
-    mv $ROOTFS_DIR/xz-5.2.5-linux-x86_64/xz $ROOTFS_DIR/xz
-    chmod 755 $ROOTFS_DIR/xz
-    rm -rf $ROOTFS_DIR/xz-static.tar.gz $ROOTFS_DIR/xz-5.2.5-linux-x86_64
+    curl -Lo /tmp/gotty.tar.gz "https://github.com/sorenisanerd/gotty/releases/download/v1.5.0/gotty_v1.5.0_linux_${ARCH_ALT}.tar.gz"
+    curl -Lo $ROOTFS_DIR/usr/local/bin/proot "https://github.com/proot-me/proot/releases/download/v${PROOT_VERSION}/proot-v${PROOT_VERSION}-${ARCH}-static"
 
-    # Download rootfs
-    curl -L --retry 3 \
-        -o $ROOTFS_DIR/rootfs.tar.xz \
-        "https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20250202.tar.xz"
+    tar -xzf /tmp/gotty.tar.gz -C $ROOTFS_DIR/usr/local/bin
 
-    # Decompress xz then extract tar
-    $ROOTFS_DIR/xz -d $ROOTFS_DIR/rootfs.tar.xz
-    tar -xvf $ROOTFS_DIR/rootfs.tar -C $ROOTFS_DIR
-    rm -f $ROOTFS_DIR/rootfs.tar $ROOTFS_DIR/xz
+    chmod 755 $ROOTFS_DIR/usr/local/bin/proot $ROOTFS_DIR/usr/local/bin/gotty
+fi
 
-    # Download proot
-    curl -L --retry 3 \
-        -o $ROOTFS_DIR/proot \
-        "https://github.com/proot-me/proot/releases/download/v${PROOT_VERSION}/proot-v${PROOT_VERSION}-${ARCH}-static"
-    chmod 755 $ROOTFS_DIR/proot
-
-    # Download gotty
-    curl -L --retry 3 \
-        -o $ROOTFS_DIR/gotty.tar.gz \
-        "https://github.com/sorenisanerd/gotty/releases/download/v1.5.0/gotty_v1.5.0_linux_${ARCH_ALT}.tar.gz"
-    tar -xzf $ROOTFS_DIR/gotty.tar.gz -C $ROOTFS_DIR/usr/local/bin
-    chmod 755 $ROOTFS_DIR/usr/local/bin/gotty
-    rm -f $ROOTFS_DIR/gotty.tar.gz
-
-    mkdir -p $ROOTFS_DIR/root
-    printf "nameserver 1.1.1.1\nnameserver 1.0.0.1\n" > $ROOTFS_DIR/etc/resolv.conf
-
+# Clean-up after installation complete & finish up.
+if [ ! -e $ROOTFS_DIR/.installed ]; then
+    # Add DNS Resolver nameservers to resolv.conf.
+    printf "nameserver 1.1.1.1\nnameserver 1.0.0.1" > ${ROOTFS_DIR}/etc/resolv.conf
+    # Wipe the files we downloaded into /tmp previously.
+    rm -rf /tmp/rootfs.tar.gz /tmp/gotty.tar.gz
+    # Create .installed to later check whether Arch is installed.
     touch $ROOTFS_DIR/.installed
 fi
 
-printf "\nWelcome to Void Linux (proot)!\n\n"
-printf "   xbps-install [package]   : install a package\n"
-printf "   xbps-remove [package]    : remove a package\n"
-printf "   xbps-install -Su         : sync and upgrade all packages\n"
-printf "   xbps-query -Rs [keyword] : search for a package\n"
-printf "   gotty -p [port] -w bash  : share your terminal\n\n"
+# Print some useful information to the terminal before entering PRoot.
+clear && cat << EOF
 
-$ROOTFS_DIR/proot \
+  █████╗ ██████╗  ██████╗██╗  ██╗
+ ██╔══██╗██╔══██╗██╔════╝██║  ██║
+ ███████║██████╔╝██║     ███████║
+ ██╔══██║██╔══██╗██║     ██╔══██║
+ ██║  ██║██║  ██║╚██████╗██║  ██║
+ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
+
+ Welcome to Arch Linux (proot)!
+ Arch is a lightweight, rolling-release Linux distribution for advanced users.
+
+ Here are some useful commands to get you started:
+
+    pacman -S [package]    : install a package
+    pacman -R [package]    : remove a package
+    pacman -Sy             : update the package index
+    pacman -Syu            : upgrade all installed packages
+    pacman -Ss [keyword]   : search for a package
+    pacman -Si [package]   : show information about a package
+    gotty -p [port] -w bash : share your terminal
+
+ If you run into any issues make sure to report them on GitHub!
+ https://github.com/LimanGit/barbor
+
+EOF
+
+###########################
+# Start PRoot environment #
+###########################
+
+$ROOTFS_DIR/usr/local/bin/proot \
 --rootfs="${ROOTFS_DIR}" \
 --link2symlink \
 --kill-on-exit \
@@ -71,4 +93,4 @@ $ROOTFS_DIR/proot \
 --bind=/dev \
 --bind=/sys \
 --bind=/tmp \
-/bin/sh
+/bin/bash
