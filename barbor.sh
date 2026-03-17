@@ -15,17 +15,29 @@ fi
 mkdir -p $ROOTFS_DIR
 
 if [ ! -e $ROOTFS_DIR/.installed ]; then
-    curl -L --retry 3 -o $ROOTFS_DIR/rootfs.tar.xz \
+    # Download xz static binary first since container doesn't have it
+    curl -L --retry 3 \
+        -o $ROOTFS_DIR/xz \
+        "https://github.com/nicowillis/static-binaries/raw/master/xz"
+    chmod 755 $ROOTFS_DIR/xz
+
+    # Download rootfs
+    curl -L --retry 3 \
+        -o $ROOTFS_DIR/rootfs.tar.xz \
         "https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20250202.tar.xz"
 
-    tar -xvf $ROOTFS_DIR/rootfs.tar.xz -C $ROOTFS_DIR
-    rm -f $ROOTFS_DIR/rootfs.tar.xz
+    # Decompress with our static xz, then extract
+    $ROOTFS_DIR/xz -d $ROOTFS_DIR/rootfs.tar.xz
+    tar -xvf $ROOTFS_DIR/rootfs.tar -C $ROOTFS_DIR
+    rm -f $ROOTFS_DIR/rootfs.tar $ROOTFS_DIR/xz
 
+    # Download proot
     curl -L --retry 3 \
         -o $ROOTFS_DIR/proot \
         "https://github.com/proot-me/proot/releases/download/v${PROOT_VERSION}/proot-v${PROOT_VERSION}-${ARCH}-static"
     chmod 755 $ROOTFS_DIR/proot
 
+    # Download gotty
     curl -L --retry 3 \
         -o $ROOTFS_DIR/gotty.tar.gz \
         "https://github.com/sorenisanerd/gotty/releases/download/v1.5.0/gotty_v1.5.0_linux_${ARCH_ALT}.tar.gz"
@@ -33,6 +45,7 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
     chmod 755 $ROOTFS_DIR/usr/local/bin/gotty
     rm -f $ROOTFS_DIR/gotty.tar.gz
 
+    mkdir -p $ROOTFS_DIR/root
     printf "nameserver 1.1.1.1\nnameserver 1.0.0.1\n" > $ROOTFS_DIR/etc/resolv.conf
 
     touch $ROOTFS_DIR/.installed
@@ -53,9 +66,6 @@ $ROOTFS_DIR/proot \
 --cwd=/root \
 --bind=/proc \
 --bind=/dev \
---bind=/sys \
---bind=/tmp \
-/bin/sh--bind=/dev \
 --bind=/sys \
 --bind=/tmp \
 /bin/sh
