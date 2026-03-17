@@ -15,12 +15,12 @@ fi
 mkdir -p $ROOTFS_DIR
 
 if [ ! -e $ROOTFS_DIR/.installed ]; then
-    curl -L --retry 3 -o /tmp/rootfs.tar.xz \
+    curl -L --retry 3 -o $ROOTFS_DIR/rootfs.tar.xz \
         "https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20250202.tar.xz"
 
-    xz -d /tmp/rootfs.tar.xz
-    tar -xf /tmp/rootfs.tar -C $ROOTFS_DIR
-    rm -f /tmp/rootfs.tar
+    xz -d $ROOTFS_DIR/rootfs.tar.xz
+    tar -xf $ROOTFS_DIR/rootfs.tar -C $ROOTFS_DIR
+    rm -f $ROOTFS_DIR/rootfs.tar
 
     curl -L --retry 3 \
         -o /tmp/proot \
@@ -34,7 +34,6 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
     tar -xzf /tmp/gotty.tar.gz -C $ROOTFS_DIR/usr/local/bin
     chmod 755 $ROOTFS_DIR/usr/local/bin/gotty
 
-    # Create /root home directory
     mkdir -p $ROOTFS_DIR/root
 
     printf "nameserver 1.1.1.1\nnameserver 1.0.0.1\n" > ${ROOTFS_DIR}/etc/resolv.conf
@@ -60,6 +59,13 @@ $PROOT_BIN \
 --rootfs="${ROOTFS_DIR}" \
 --link2symlink \
 --kill-on-exit \
+--root-id \
+--cwd=/root \
+--bind=/proc \
+--bind=/dev \
+--bind=/sys \
+--bind=/tmp \
+/bin/sh--kill-on-exit \
 --root-id \
 --cwd=/root \
 --bind=/proc \
