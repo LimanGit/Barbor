@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ##############################
-# Debian Linux Installation  #
+# Void Linux Installation    #
 ##############################
 
 # Define the root directory to /home/container.
@@ -21,11 +21,11 @@ else
   exit 1
 fi
 
-# Download & decompress the Debian root file system if not already installed.
+# Download & decompress the Void Linux root file system if not already installed.
 if [ ! -e $ROOTFS_DIR/.installed ]; then
-    curl -Lo /tmp/rootfs.tar.gz \
-    "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-amd64/bookworm/oci/blobs/rootfs.tar.gz"
-    tar -xzf /tmp/rootfs.tar.gz -C $ROOTFS_DIR
+    curl -Lo /tmp/rootfs.tar.xz \
+    "https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20250202.tar.xz"
+    tar -xJf /tmp/rootfs.tar.xz -C $ROOTFS_DIR
 fi
 
 ################################
@@ -46,32 +46,31 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
     # Add DNS Resolver nameservers to resolv.conf.
     printf "nameserver 1.1.1.1\nnameserver 1.0.0.1" > ${ROOTFS_DIR}/etc/resolv.conf
     # Wipe the files we downloaded into /tmp previously.
-    rm -rf /tmp/rootfs.tar.gz /tmp/gotty.tar.gz
-    # Create .installed to later check whether Debian is installed.
+    rm -rf /tmp/rootfs.tar.xz /tmp/gotty.tar.gz
+    # Create .installed to later check whether Void Linux is installed.
     touch $ROOTFS_DIR/.installed
 fi
 
 # Print some useful information to the terminal before entering PRoot.
 clear && cat << EOF
 
- ██████╗ ███████╗██████╗ ██╗ █████╗ ███╗   ██╗
- ██╔══██╗██╔════╝██╔══██╗██║██╔══██╗████╗  ██║
- ██║  ██║█████╗  ██████╔╝██║███████║██╔██╗ ██║
- ██║  ██║██╔══╝  ██╔══██╗██║██╔══██║██║╚██╗██║
- ██████╔╝███████╗██████╔╝██║██║  ██║██║ ╚████║
- ╚═════╝ ╚══════╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
+ ██╗   ██╗ ██████╗ ██╗██████╗
+ ██║   ██║██╔═══██╗██║██╔══██╗
+ ██║   ██║██║   ██║██║██║  ██║
+ ╚██╗ ██╔╝██║   ██║██║██║  ██║
+  ╚████╔╝ ╚██████╔╝██║██████╔╝
+   ╚═══╝   ╚═════╝ ╚═╝╚═════╝
 
- Welcome to Debian Bookworm (proot)!
- Debian is a stable, versatile Linux distribution great for running all kinds of applications.
+ Welcome to Void Linux (proot)!
+ Void is a rolling release distro with the XBPS package manager and runit init system.
 
  Here are some useful commands to get you started:
 
-    apt install [package]  : install a package
-    apt remove [package]   : remove a package
-    apt update             : update the package index
-    apt upgrade            : upgrade installed packages
-    apt search [keyword]   : search for a package
-    apt show [package]     : show information about a package
+    xbps-install [package]  : install a package
+    xbps-remove [package]   : remove a package
+    xbps-install -Su        : sync and upgrade all packages
+    xbps-query -Rs [keyword]: search for a package
+    xbps-query [package]    : show information about a package
     gotty -p [port] -w bash : share your terminal
 
  If you run into any issues make sure to report them on GitHub!
