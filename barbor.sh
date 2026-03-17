@@ -1,9 +1,5 @@
 #!/bin/sh
 
-##############################
-# Void Linux Installation    #
-##############################
-
 ROOTFS_DIR=/home/container
 PROOT_VERSION="5.3.0"
 
@@ -38,6 +34,9 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
     tar -xzf /tmp/gotty.tar.gz -C $ROOTFS_DIR/usr/local/bin
     chmod 755 $ROOTFS_DIR/usr/local/bin/gotty
 
+    # Create /root home directory
+    mkdir -p $ROOTFS_DIR/root
+
     printf "nameserver 1.1.1.1\nnameserver 1.0.0.1\n" > ${ROOTFS_DIR}/etc/resolv.conf
 
     rm -f /tmp/gotty.tar.gz
@@ -67,4 +66,4 @@ $PROOT_BIN \
 --bind=/dev \
 --bind=/sys \
 --bind=/tmp \
-/bin/bash
+/bin/sh
