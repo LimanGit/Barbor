@@ -27,19 +27,30 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+
+      - name: Set version from tag
+        id: version                          # ✅ give this step an id
+        run: |
+          RAW_TAG="${{ github.event.inputs.tag }}"
+          VERSION="${RAW_TAG#v}"
+          VERSION="${VERSION:-1.0.0}"
+          echo "value=$VERSION" >> $GITHUB_OUTPUT   # ✅ use GITHUB_OUTPUT not GITHUB_ENV
+
       - name: Compile Kotlin Wrapper
         run: |
           cd wrappers/Kotlin
+          sed -i "s/^version = .*/version = ${{ steps.version.outputs.value }}/" gradle.properties
           chmod +x gradlew
           ./gradlew shadowJar
-          mv build/libs/barbor-1.0.0-all.jar .
-      - uses: actions/upload-artifact@v6
+          mv build/libs/barbor-${{ steps.version.outputs.value }}-all.jar .
+
+      - uses: actions/upload-artifact@v4
         with:
           name: Artifacts
           path: |
             wrappers/Javascript/barbor.js
             wrappers/Python/barbor.py
-            wrappers/Kotlin/barbor-1.0.0-all.jar
+            wrappers/Kotlin/barbor-${{ steps.version.outputs.value }}-all.jar
             barbor.sh
 
   release:
@@ -48,6 +59,13 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set version from tag
+        id: version                          # ✅ same pattern in release job
+        run: |
+          RAW_TAG="${{ github.event.inputs.tag }}"
+          VERSION="${RAW_TAG#v}"
+          echo "value=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -65,7 +83,7 @@ jobs:
           files: |
             release-files/barbor.js
             release-files/barbor.py
-            release-files/barbor-1.0.0-all.jar
+            release-files/barbor-${{ steps.version.outputs.value }}-all.jar
             release-files/barbor.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
