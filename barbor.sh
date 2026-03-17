@@ -24,7 +24,7 @@ fi
 # Download & decompress the Debian root file system if not already installed.
 if [ ! -e $ROOTFS_DIR/.installed ]; then
     curl -Lo /tmp/rootfs.tar.gz \
-    "https://github.com/LimanGit/Barbor/releases/download/debian-rootfs/debian.tar.gz"
+    "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-amd64/bookworm/oci/blobs/rootfs.tar.gz"
     tar -xzf /tmp/rootfs.tar.gz -C $ROOTFS_DIR
 fi
 
@@ -49,10 +49,6 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
     rm -rf /tmp/rootfs.tar.gz /tmp/gotty.tar.gz
     # Create .installed to later check whether Debian is installed.
     touch $ROOTFS_DIR/.installed
-    mkdir $ROOTFS_DIR/root
-    mkdir $ROOTFS_DIR/proc
-    mkdir $ROOTFS_DIR/tmp
-    
 fi
 
 # Print some useful information to the terminal before entering PRoot.
