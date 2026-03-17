@@ -15,18 +15,21 @@ fi
 mkdir -p $ROOTFS_DIR
 
 if [ ! -e $ROOTFS_DIR/.installed ]; then
-    # Download xz static binary first since container doesn't have it
+    # Download static xz binary (comes as .tar.gz so we can extract it)
     curl -L --retry 3 \
-        -o $ROOTFS_DIR/xz \
-        "https://github.com/nicowillis/static-binaries/raw/master/xz"
+        -o $ROOTFS_DIR/xz-static.tar.gz \
+        "https://github.com/therootcompany/xz-static/releases/download/v5.2.5/xz-5.2.5-linux-x86_64.tar.gz"
+    tar -xzf $ROOTFS_DIR/xz-static.tar.gz -C $ROOTFS_DIR
+    mv $ROOTFS_DIR/xz-5.2.5-linux-x86_64/xz $ROOTFS_DIR/xz
     chmod 755 $ROOTFS_DIR/xz
+    rm -rf $ROOTFS_DIR/xz-static.tar.gz $ROOTFS_DIR/xz-5.2.5-linux-x86_64
 
     # Download rootfs
     curl -L --retry 3 \
         -o $ROOTFS_DIR/rootfs.tar.xz \
         "https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20250202.tar.xz"
 
-    # Decompress with our static xz, then extract
+    # Decompress xz then extract tar
     $ROOTFS_DIR/xz -d $ROOTFS_DIR/rootfs.tar.xz
     tar -xvf $ROOTFS_DIR/rootfs.tar -C $ROOTFS_DIR
     rm -f $ROOTFS_DIR/rootfs.tar $ROOTFS_DIR/xz
