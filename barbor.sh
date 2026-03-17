@@ -36,9 +36,7 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
     tar -xzf /tmp/gotty.tar.gz -C $ROOTFS_DIR/usr/local/bin
 
     chmod 755 $ROOTFS_DIR/usr/local/bin/proot $ROOTFS_DIR/usr/local/bin/gotty
-fi
 
-if [ ! -e $ROOTFS_DIR/.installed ]; then
     printf "nameserver 1.1.1.1\nnameserver 1.0.0.1" > ${ROOTFS_DIR}/etc/resolv.conf
     rm -rf /tmp/rootfs.tar.gz /tmp/gotty.tar.gz
     touch $ROOTFS_DIR/.installed
