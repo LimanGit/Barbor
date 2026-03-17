@@ -1,15 +1,19 @@
 #!/bin/sh
 
 ##############################
-# Arch Linux Installation    #
+# Debian Linux Installation  #
 ##############################
 
+# Define the root directory to /home/container.
+# We can only write in /home/container and /tmp in the container.
 ROOTFS_DIR=/home/container
 
 PROOT_VERSION="5.3.0"
 
+# Detect the machine architecture.
 ARCH=$(uname -m)
 
+# Only support x86_64/amd64.
 if [ "$ARCH" = "x86_64" ]; then
   ARCH_ALT=amd64
 else
@@ -17,12 +21,11 @@ else
   exit 1
 fi
 
+# Download & decompress the Debian root file system if not already installed.
 if [ ! -e $ROOTFS_DIR/.installed ]; then
     curl -Lo /tmp/rootfs.tar.gz \
-    "https://github.com/LimanGit/Barbor/releases/download/arch-rootfs/arch.tar.gz"
+    "https://github.com/LimanGit/Barbor/releases/download/debian-rootfs/debian.tar.gz"
     tar -xzf /tmp/rootfs.tar.gz -C $ROOTFS_DIR
-    cd $ROOTFS_DIR/root.x86_64 && mv -f ./* ../ && mv -f ./.[!.]* ../ 2>/dev/null || true
-    cd $ROOTFS_DIR && rm -rf root.x86_64
 fi
 
 ################################
@@ -31,37 +34,44 @@ fi
 
 if [ ! -e $ROOTFS_DIR/.installed ]; then
     curl -Lo /tmp/gotty.tar.gz "https://github.com/sorenisanerd/gotty/releases/download/v1.5.0/gotty_v1.5.0_linux_${ARCH_ALT}.tar.gz"
-    curl -Lo $ROOTFS_DIR/usr/bin/proot "https://github.com/proot-me/proot/releases/download/v${PROOT_VERSION}/proot-v${PROOT_VERSION}-${ARCH}-static"
+    curl -Lo $ROOTFS_DIR/usr/local/bin/proot "https://github.com/proot-me/proot/releases/download/v${PROOT_VERSION}/proot-v${PROOT_VERSION}-${ARCH}-static"
 
-    tar -xzf /tmp/gotty.tar.gz -C $ROOTFS_DIR/usr/bin
+    tar -xzf /tmp/gotty.tar.gz -C $ROOTFS_DIR/usr/local/bin
 
-    chmod 755 $ROOTFS_DIR/usr/bin/proot $ROOTFS_DIR/usr/bin/gotty
+    chmod 755 $ROOTFS_DIR/usr/local/bin/proot $ROOTFS_DIR/usr/local/bin/gotty
+fi
 
+# Clean-up after installation complete & finish up.
+if [ ! -e $ROOTFS_DIR/.installed ]; then
+    # Add DNS Resolver nameservers to resolv.conf.
     printf "nameserver 1.1.1.1\nnameserver 1.0.0.1" > ${ROOTFS_DIR}/etc/resolv.conf
+    # Wipe the files we downloaded into /tmp previously.
     rm -rf /tmp/rootfs.tar.gz /tmp/gotty.tar.gz
+    # Create .installed to later check whether Debian is installed.
     touch $ROOTFS_DIR/.installed
 fi
 
+# Print some useful information to the terminal before entering PRoot.
 clear && cat << EOF
 
-  █████╗ ██████╗  ██████╗██╗  ██╗
- ██╔══██╗██╔══██╗██╔════╝██║  ██║
- ███████║██████╔╝██║     ███████║
- ██╔══██║██╔══██╗██║     ██╔══██║
- ██║  ██║██║  ██║╚██████╗██║  ██║
- ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
+ ██████╗ ███████╗██████╗ ██╗ █████╗ ███╗   ██╗
+ ██╔══██╗██╔════╝██╔══██╗██║██╔══██╗████╗  ██║
+ ██║  ██║█████╗  ██████╔╝██║███████║██╔██╗ ██║
+ ██║  ██║██╔══╝  ██╔══██╗██║██╔══██║██║╚██╗██║
+ ██████╔╝███████╗██████╔╝██║██║  ██║██║ ╚████║
+ ╚═════╝ ╚══════╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
 
- Welcome to Arch Linux (proot)!
- Arch is a lightweight, rolling-release Linux distribution for advanced users.
+ Welcome to Debian Bookworm (proot)!
+ Debian is a stable, versatile Linux distribution great for running all kinds of applications.
 
  Here are some useful commands to get you started:
 
-    pacman -S [package]    : install a package
-    pacman -R [package]    : remove a package
-    pacman -Sy             : update the package index
-    pacman -Syu            : upgrade all installed packages
-    pacman -Ss [keyword]   : search for a package
-    pacman -Si [package]   : show information about a package
+    apt install [package]  : install a package
+    apt remove [package]   : remove a package
+    apt update             : update the package index
+    apt upgrade            : upgrade installed packages
+    apt search [keyword]   : search for a package
+    apt show [package]     : show information about a package
     gotty -p [port] -w bash : share your terminal
 
  If you run into any issues make sure to report them on GitHub!
@@ -73,7 +83,7 @@ EOF
 # Start PRoot environment #
 ###########################
 
-$ROOTFS_DIR/usr/bin/proot \
+$ROOTFS_DIR/usr/local/bin/proot \
 --rootfs="${ROOTFS_DIR}" \
 --link2symlink \
 --kill-on-exit \
