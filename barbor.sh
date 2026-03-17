@@ -31,18 +31,18 @@ fi
 
 if [ ! -e $ROOTFS_DIR/.installed ]; then
     curl -Lo /tmp/gotty.tar.gz "https://github.com/sorenisanerd/gotty/releases/download/v1.5.0/gotty_v1.5.0_linux_${ARCH_ALT}.tar.gz"
-    curl -Lo $ROOTFS_DIR/usr/local/bin/proot "https://github.com/proot-me/proot/releases/download/v${PROOT_VERSION}/proot-v${PROOT_VERSION}-${ARCH}-static"
+    curl -Lo $ROOTFS_DIR/usr/bin/proot "https://github.com/proot-me/proot/releases/download/v${PROOT_VERSION}/proot-v${PROOT_VERSION}-${ARCH}-static"
 
-    tar -xzf /tmp/gotty.tar.gz -C $ROOTFS_DIR/usr/local/bin
+    tar -xzf /tmp/gotty.tar.gz -C $ROOTFS_DIR/usr/bin
 
-    chmod 755 $ROOTFS_DIR/usr/local/bin/proot $ROOTFS_DIR/usr/local/bin/gotty
+    chmod 755 $ROOTFS_DIR/usr/bin/proot $ROOTFS_DIR/usr/bin/gotty
 
     printf "nameserver 1.1.1.1\nnameserver 1.0.0.1" > ${ROOTFS_DIR}/etc/resolv.conf
     rm -rf /tmp/rootfs.tar.gz /tmp/gotty.tar.gz
     touch $ROOTFS_DIR/.installed
 fi
 
-cat << EOF
+clear && cat << EOF
 
   █████╗ ██████╗  ██████╗██╗  ██╗
  ██╔══██╗██╔══██╗██╔════╝██║  ██║
@@ -73,7 +73,7 @@ EOF
 # Start PRoot environment #
 ###########################
 
-$ROOTFS_DIR/usr/local/bin/proot \
+$ROOTFS_DIR/usr/bin/proot \
 --rootfs="${ROOTFS_DIR}" \
 --link2symlink \
 --kill-on-exit \
