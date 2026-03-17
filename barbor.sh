@@ -20,7 +20,10 @@ fi
 if [ ! -e $ROOTFS_DIR/.installed ]; then
     curl -Lo /tmp/rootfs.tar.gz \
     "https://github.com/LimanGit/Barbor/releases/download/arch-rootfs/arch.tar.gz"
-    tar -xzf /tmp/rootfs.tar.gz -C $ROOTFS_DIR --strip-components=1
+    tar -xzf /tmp/rootfs.tar.gz -C $ROOTFS_DIR
+    mv $ROOTFS_DIR/root.x86_64/* $ROOTFS_DIR/
+    mv $ROOTFS_DIR/root.x86_64/.[!.]* $ROOTFS_DIR/ 2>/dev/null || true
+    rm -rf $ROOTFS_DIR/root.x86_64
 fi
 
 ################################
