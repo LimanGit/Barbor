@@ -49,6 +49,10 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
     rm -rf /tmp/rootfs.tar.gz /tmp/gotty.tar.gz
     # Create .installed to later check whether Debian is installed.
     touch $ROOTFS_DIR/.installed
+    mkdir $ROOTFS_DIR/root
+    mkdir $ROOTFS_DIR/proc
+    mkdir $ROOTFS_DIR/tmp
+    
 fi
 
 # Print some useful information to the terminal before entering PRoot.
@@ -93,4 +97,4 @@ $ROOTFS_DIR/usr/local/bin/proot \
 --bind=/dev \
 --bind=/sys \
 --bind=/tmp \
-/bin/sh
+/bin/bash
